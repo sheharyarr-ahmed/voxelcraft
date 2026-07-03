@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment
+venv/
+.env
+
+# Model weights & caches — never commit multi-GB artifacts
+*.safetensors
+*.ckpt
+*.bin
+models/
+.cache/
+
+# Gradio
+flagged/
+gradio_cached_examples/
+
+# OS
+.DS_Store
+
+# Claude Code — personal overrides stay local
+.claude/settings.local.json
+CLAUDE.local.md
+.claude/CLAUDE.local.md
