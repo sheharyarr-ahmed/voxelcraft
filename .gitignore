@@ -21,6 +21,9 @@ models/
 flagged/
 gradio_cached_examples/
 
+# Local smoke-test artifact (D11)
+smoke_output.png
+
 # OS
 .DS_Store
 

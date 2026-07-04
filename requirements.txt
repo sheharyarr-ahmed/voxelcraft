@@ -6,3 +6,5 @@ pillow>=10.3
 controlnet-aux>=0.0.7
 pydantic>=2.7
 huggingface-hub>=0.24
+peft>=0.14
+accelerate>=1.0

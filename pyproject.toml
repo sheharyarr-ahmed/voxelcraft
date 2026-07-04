@@ -1,0 +1,34 @@
+# Tooling config (SPEC code-style rule: black line 100, isort profile black, mypy strict).
+# Deliberately NO [project] / [build-system] tables — VoxelCraft is a Gradio app, not a
+# distributable package; Hugging Face Spaces installs from requirements.txt.
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+
+# Third-party ML libraries either ship no type stubs (controlnet_aux) or ship py.typed
+# markers over largely untyped implementations (diffusers, transformers). Rather than
+# scatter inline ignores through the pipeline code, scope the leniency here.
+[[tool.mypy.overrides]]
+module = ["controlnet_aux.*", "diffusers.*", "transformers.*"]
+ignore_missing_imports = true
+
+# Pipeline code calls into those untyped ML APIs constantly; allow those calls and the
+# Any values they return without weakening strictness for the rest of src/.
+[[tool.mypy.overrides]]
+module = "src.pipelines.*"
+disallow_untyped_calls = false
+warn_return_any = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

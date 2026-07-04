@@ -70,3 +70,50 @@ production image.
 Makes the Phase 0 suite green with a real assertion — the commit-msg hook rejects attribution
 strings and accepts clean messages — instead of a placeholder test, and keeps D10 continuously
 enforced by the suite rather than only by the one-off live demo.
+
+**A4 (2026-07-05) — `peft` added to requirements.txt.**
+diffusers 0.39's multi-adapter API (`set_adapters`, `enable_lora`, `disable_lora`, and
+`load_lora_weights(..., adapter_name=)` stacking) raises `ValueError("PEFT backend is required")`
+without it — verified against the installed venv source. Alternatives rejected: `fuse_lora` (banned
+per D-loras — bakes weights, kills per-request re-weighting); the legacy single-LoRA path (cannot
+stack the 1–2 adapters the SPEC requires).
+
+**A5 (2026-07-05) — `pyproject.toml` created.**
+Pre-authorized by `rules/code-style.md` ("config lands in pyproject.toml … once that file is
+created"). Forced now because mypy `--strict` needs a home for per-module overrides:
+`controlnet_aux.*` ships no py.typed (→ `ignore_missing_imports`), and diffusers/transformers ship
+py.typed over largely untyped implementations (→ `disallow_untyped_calls = false` scoped to
+`src.pipelines.*`). Also carries black/isort/pytest config. No `[project]`/`[build-system]` — this
+is a Gradio app, not a distributable package; Spaces installs from requirements.txt.
+
+**A6 (2026-07-05) — D11 smoke test lives at `scripts/smoke_test.py`, excluded from pytest.**
+The Stop hook runs `pytest -q` on every session stop; a minutes-long CPU generation must never fire
+there. A standalone script pytest never collects removes that risk entirely (chosen over a
+`@pytest.mark.smoke` + `addopts` arrangement, which is strictly more moving parts). Also records that
+`scripts/` and `src/exceptions.py` are additions beyond SPEC's literal file tree (A1 precedent:
+working structure beats tree fidelity).
+
+**A7 (2026-07-05) — gradio 6 API corrections.**
+Audited against installed gradio 6.19: `launch(show_api=...)` was removed — the API surface is
+hidden per event listener via `api_visibility="private"` (SPEC excludes a programmatic API), and
+`show_progress` takes `"full"|"minimal"|"hidden"` literals, not booleans. `agents/build/gradio-builder.md`
+is amended to match when `app.py` lands (its `demo.launch(show_api=False)` guidance was gradio-5-era).
+
+**A8 (2026-07-05) — test suite extended with `test_lora_manager.py` / `test_controlnet_processor.py`.**
+The LoRA and pose state machines are pure control flow (load-once, enable-before-set_adapters,
+disable→re-enable, blank-skeleton rejection) and are unit-testable against a fake pipeline/detector
+with zero model weights. Inference itself stays untested per the SPEC (nondeterministic, GPU-bound;
+covered by phase acceptance + live demo).
+
+**A9 (2026-07-05) — `accelerate` added to requirements.txt.**
+Without it diffusers falls back to `low_cpu_mem_usage=False` and double-allocates on load — the fp32
+UNet peaks near 2×3.4 GB transiently, untenable against this 8 GB M1's ~5.7 GB MPS working set.
+accelerate is pure-Python, $0, and the Spaces standard. New runtime dependency, logged per the same
+protocol A4 followed.
+
+**A10 (2026-07-05) — `DPMSolverMultistepScheduler` @ 20 steps over checkpoint-default PNDM @ 50.**
+DPM++ 2M reaches comparable SD 1.5 quality at 20–25 steps, a 2–2.5× wall-clock cut — the difference
+between failing and meeting the SPEC's <5-min CPU-basic target, and it also shrinks the local smoke
+run and ZeroGPU quota per generation. Set identically on every device (a device-conditional step
+count would falsify the committed example images' metadata). The scheduler name is read back from
+`type(pipe.scheduler).__name__` into the metadata panel, never hardcoded.
