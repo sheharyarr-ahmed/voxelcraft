@@ -39,8 +39,11 @@ except ImportError:  # local dev or CPU-basic Space
         return fn if callable(fn) else (lambda f: f)
 ```
 
-Queue on, one GPU job at a time: `demo.queue(default_concurrency_limit=1)`. Launch with
-`demo.launch(show_api=False)` — no programmatic API surface, no auth, no persistence.
+Queue on, one GPU job at a time: `demo.queue(default_concurrency_limit=1, max_size=8)`.
+gradio 6 removed `launch(show_api=...)`; hide the programmatic API surface per event listener
+instead — every generation `.click()` takes `api_visibility="private"`, plus `concurrency_id="gpu"`
+so Tab 1 and Tab 2 share one concurrency group (a per-handler group would let them run at once).
+`show_progress` takes the literals `"full" | "minimal" | "hidden"`, not booleans. (A7)
 
 ## Lazy-load UX (D7)
 
