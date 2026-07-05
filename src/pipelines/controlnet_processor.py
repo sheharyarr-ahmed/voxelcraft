@@ -108,7 +108,7 @@ def generate_posed(request: ControlNetRequest) -> tuple[Any, Any, dict[str, Any]
         overflow = clip_token_overflow(pipe.tokenizer, request.prompt)
         start = time.perf_counter()
         try:
-            image = _infer_posed(pipe, request, skeleton, generator)
+            image, run_device, run_dtype = _infer_posed(pipe, request, skeleton, generator)
             elapsed = time.perf_counter() - start
         except RuntimeError as exc:
             if not sd_pipeline.is_oom(exc):
@@ -124,8 +124,8 @@ def generate_posed(request: ControlNetRequest) -> tuple[Any, Any, dict[str, Any]
             steps=request.steps,
             guidance_scale=request.guidance_scale,
             inference_seconds=elapsed,
-            device=str(pipe.device),
-            dtype=str(pipe.dtype),
+            device=run_device,
+            dtype=run_dtype,
             truncated_tokens=overflow,
             safety_checker=pipe.safety_checker is not None,
             extra={"conditioning_scale": request.conditioning_scale},
@@ -133,8 +133,15 @@ def generate_posed(request: ControlNetRequest) -> tuple[Any, Any, dict[str, Any]
     return skeleton, image, metadata
 
 
+@sd_pipeline.gpu
 def _infer_posed(pipe: Any, request: ControlNetRequest, skeleton: Any, generator: Any) -> Any:
-    """The GPU-bound pose-conditioned denoise step (Phase 4 wraps this with @spaces.GPU)."""
+    """The GPU-bound pose-conditioned denoise step; on ZeroGPU runs on an attached GPU (child).
+
+    Returns (image, device, dtype) so the metadata reports where inference actually ran.
+    """
+    if torch.cuda.is_available() and str(pipe.device).startswith("cpu"):
+        pipe.to("cuda")  # ZeroGPU attaches CUDA only inside this call
+    device, dtype = str(pipe.device), str(pipe.dtype)
     with torch.inference_mode():
         result = pipe(
             prompt=request.prompt,
@@ -151,4 +158,4 @@ def _infer_posed(pipe: Any, request: ControlNetRequest, skeleton: Any, generator
         raise GenerationError(
             "The safety filter flagged this output. Try a different prompt or seed."
         )
-    return result.images[0]
+    return result.images[0], device, dtype

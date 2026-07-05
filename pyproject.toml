@@ -19,7 +19,7 @@ files = ["src"]
 # markers over largely untyped implementations (diffusers, transformers). Rather than
 # scatter inline ignores through the pipeline code, scope the leniency here.
 [[tool.mypy.overrides]]
-module = ["controlnet_aux.*", "diffusers.*", "transformers.*"]
+module = ["controlnet_aux.*", "diffusers.*", "transformers.*", "spaces.*"]
 ignore_missing_imports = true
 
 # Pipeline code calls into those untyped ML APIs constantly; allow those calls and the

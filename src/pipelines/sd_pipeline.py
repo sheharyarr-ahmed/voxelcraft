@@ -19,7 +19,7 @@ import logging
 import os
 import threading
 import time
-from typing import Any
+from typing import Any, Callable, TypeVar
 
 import torch
 from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
@@ -41,6 +41,27 @@ _load_lock = threading.Lock()  # guards one-time singleton construction
 # full model resident on the 8 GB dev machine, whatever the queue's concurrency config says.
 GPU_LOCK = threading.Lock()
 
+# On ZeroGPU (HF sets SPACES_ZERO_GPU), spaces.GPU attaches a GPU for the duration of the
+# wrapped call, which runs in a forked child; the pipeline is built fp16 on CPU in the parent
+# and moved to CUDA inside the call. Everywhere else (local, CPU-basic) this is a no-op and the
+# code path is byte-for-byte identical — the import only happens when the env var is present.
+_ZERO_GPU = bool(os.environ.get("SPACES_ZERO_GPU"))
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+
+def gpu(fn: _F) -> _F:
+    """Mark a function as GPU-bound.
+
+    On ZeroGPU (SPACES_ZERO_GPU set) wrap it with spaces.GPU, which attaches a GPU for the
+    call's duration in a forked child. Everywhere else it is the identity, so local and
+    CPU-basic runs are unaffected.
+    """
+    if not _ZERO_GPU:
+        return fn
+    import spaces
+
+    return spaces.GPU(duration=120)(fn)
+
 
 def detect_device() -> tuple[str, torch.dtype]:
     """Resolve (device, dtype). VOXELCRAFT_DEVICE wins; else cuda -> mps -> cpu."""
@@ -53,8 +74,11 @@ def detect_device() -> tuple[str, torch.dtype]:
         device = "mps"
     else:
         device = "cpu"
-    # fp16 only on CUDA; MPS and CPU stay fp32 (fp16 on MPS yields black/NaN on SD 1.5).
-    dtype = torch.float16 if device == "cuda" else torch.float32
+    # fp16 on CUDA, and on ZeroGPU where CUDA attaches later inside the @spaces.GPU call (the
+    # pipeline is built fp16 on CPU, then moved to CUDA in _infer). MPS and CPU stay fp32
+    # (fp16 on MPS yields black/NaN on SD 1.5).
+    use_fp16 = device == "cuda" or bool(os.environ.get("SPACES_ZERO_GPU"))
+    dtype = torch.float16 if use_fp16 else torch.float32
     return device, dtype
 
 
@@ -124,7 +148,7 @@ def generate(request: GenerationRequest) -> tuple[Any, dict[str, Any]]:
         overflow = clip_token_overflow(pipe.tokenizer, request.prompt)
         start = time.perf_counter()
         try:
-            image = _infer(pipe, request, generator)
+            image, run_device, run_dtype = _infer(pipe, request, generator)
             elapsed = time.perf_counter() - start  # time the denoise only, not cleanup
         except RuntimeError as exc:
             if not is_oom(exc):
@@ -140,16 +164,24 @@ def generate(request: GenerationRequest) -> tuple[Any, dict[str, Any]]:
             steps=request.steps,
             guidance_scale=request.guidance_scale,
             inference_seconds=elapsed,
-            device=str(pipe.device),
-            dtype=str(pipe.dtype),
+            device=run_device,
+            dtype=run_dtype,
             truncated_tokens=overflow,
             safety_checker=pipe.safety_checker is not None,
         )
     return image, metadata
 
 
+@gpu
 def _infer(pipe: Any, request: GenerationRequest, generator: Any) -> Any:
-    """The GPU-bound denoise step. Phase 4 wraps exactly this with ``@spaces.GPU``."""
+    """The GPU-bound denoise step. On ZeroGPU this runs on an attached GPU in a forked child.
+
+    Returns (image, device, dtype) so the metadata reports where inference actually ran: on
+    ZeroGPU the move to CUDA happens in this child and never touches the parent's pipe object.
+    """
+    if torch.cuda.is_available() and str(pipe.device).startswith("cpu"):
+        pipe.to("cuda")  # ZeroGPU attaches CUDA only inside this call
+    device, dtype = str(pipe.device), str(pipe.dtype)
     with torch.inference_mode():
         result = pipe(
             prompt=request.prompt,
@@ -164,7 +196,7 @@ def _infer(pipe: Any, request: GenerationRequest, generator: Any) -> Any:
         raise GenerationError(
             "The safety filter flagged this output. Try a different prompt or seed."
         )
-    return result.images[0]
+    return result.images[0], device, dtype
 
 
 if __name__ == "__main__":  # documented warm-up: pre-download weights before launching app.py

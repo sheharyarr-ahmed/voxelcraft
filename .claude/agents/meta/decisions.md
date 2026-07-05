@@ -152,3 +152,13 @@ special-case a broken file or keep testing candidates — two LoRAs fully demons
 stacking, and weight blending, which is the portfolio point (simplicity-first). More can be added
 later once load-verified. Also added a `logger.warning` of the real cause in `_load_adapter` so a
 future load failure is diagnosable from the Space logs instead of hidden behind the generic message.
+
+**A14 (2026-07-05) — ZeroGPU wiring implemented (env-gated), superseding A12's deferral.**
+With the Space live and testable, wired `@spaces.GPU` around the pure inference steps (`_infer`,
+`_infer_posed`). Activation is gated on the `SPACES_ZERO_GPU` env var (HF sets it only on ZeroGPU
+hardware): off-ZeroGPU the decorator is the identity and `spaces` is never imported, so local and
+CPU-basic runs are byte-for-byte unchanged (verified `gpu(f) is f`, detect_device returns fp32).
+On ZeroGPU the pipeline builds fp16 on CPU in the parent, and the forked child moves it to CUDA
+inside the call; `_infer` returns the real (device, dtype) so the metadata panel stays honest.
+`spaces` is intentionally not added to requirements.txt — the ZeroGPU image provides it, and
+keeping it out avoids any risk to the working CPU-basic build. To be verified live after the grant.
