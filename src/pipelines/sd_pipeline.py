@@ -36,7 +36,10 @@ logger = logging.getLogger(__name__)
 # dynamically, so those attributes are not statically declared on the class.
 _pipeline: Any = None
 _load_lock = threading.Lock()  # guards one-time singleton construction
-_gpu_lock = threading.Lock()  # serializes the mutate-then-infer critical section
+# Shared across every pipeline (text2img and ControlNet): serializes the mutate-then-infer
+# critical section so two concurrent requests can never interleave LoRA state or both hold a
+# full model resident on the 8 GB dev machine, whatever the queue's concurrency config says.
+GPU_LOCK = threading.Lock()
 
 
 def detect_device() -> tuple[str, torch.dtype]:
@@ -97,7 +100,7 @@ def free_memory() -> None:
         torch.mps.empty_cache()
 
 
-def _is_oom(exc: BaseException) -> bool:
+def is_oom(exc: BaseException) -> bool:
     """Whether an exception is an out-of-memory error on CUDA, MPS, or CPU.
 
     Only CUDA raises the dedicated ``torch.cuda.OutOfMemoryError``; MPS and CPU (this repo's
@@ -112,7 +115,7 @@ def _is_oom(exc: BaseException) -> bool:
 
 def generate(request: GenerationRequest) -> tuple[Any, dict[str, Any]]:
     """Run a validated text-to-image request; return (PIL image, metadata dict)."""
-    with _gpu_lock:
+    with GPU_LOCK:
         pipe = get_pipeline()
         adapter_names, adapter_weights = lora_manager.apply_loras(pipe, request.loras)
         seed = resolve_seed(request.seed)
@@ -124,7 +127,7 @@ def generate(request: GenerationRequest) -> tuple[Any, dict[str, Any]]:
             image = _infer(pipe, request, generator)
             elapsed = time.perf_counter() - start  # time the denoise only, not cleanup
         except RuntimeError as exc:
-            if not _is_oom(exc):
+            if not is_oom(exc):
                 raise
             raise GenerationError("Out of memory — try fewer LoRAs or retry in a moment.") from exc
         finally:
