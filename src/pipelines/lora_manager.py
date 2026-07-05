@@ -105,6 +105,9 @@ def _load_adapter(pipe: Any, key: str, loaded: set[str]) -> None:
     except LoraLoadError:
         raise  # keep the specific message from _ensure_local_weights
     except Exception as exc:  # diffusers raises a variety of load-time errors; normalize them
+        # Log the real cause (the user-facing message stays generic); without this a bad LoRA
+        # only surfaces as "Could not load", with no way to diagnose it from the Space logs.
+        logger.warning("LoRA %r failed to load: %s: %s", key, type(exc).__name__, exc)
         raise LoraLoadError(f"Could not load LoRA {key!r}.") from exc
     loaded.add(key)
 

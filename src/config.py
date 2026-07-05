@@ -72,19 +72,6 @@ class LoraEntry:
 # card on the date noted (rules/license-compliance.md, D4). All are HF-hosted and public, so
 # they load via load_lora_weights(repo_id, weight_name=...) with no auth token.
 LORA_REGISTRY: dict[str, LoraEntry] = {
-    # Verified 2026-07-05 — HF card + API (gated: false). License creativeml-openrail-m, the
-    # same license SD 1.5 ships under; its Attachment A use-restrictions do not restrict
-    # commercial use of generated images. Pin the -sd-1-5 file (the repo also has an SD-2.1 one).
-    "watercolor": LoraEntry(
-        url="https://huggingface.co/fladdict/watercolor",
-        author="fladdict",
-        license="CreativeML Open RAIL-M",
-        commercial_use=True,
-        base_model=SD15_BASE,
-        trigger="watercolor painting",
-        repo_id="fladdict/watercolor",
-        weight_name="fladdict-watercolor-sd-1-5.safetensors",
-    ),
     # Verified 2026-07-05 — HF card. bespoke-lora-trained-license; its license_link permits
     # "Sell images they generate" and "Run on services that generate images for money"; only
     # "Sell this model or merges" is disallowed, which this app does not do.

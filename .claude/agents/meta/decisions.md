@@ -140,3 +140,15 @@ adding it blind risks breaking the CPU-basic deploy. The pure-inference seam (`_
 is already isolated, so the wiring is a localized addition made when ZeroGPU is granted and can be
 verified against real Spaces logs. Alternatives rejected: shipping untested ZeroGPU plumbing now
 (deploy-time surprises); building only for ZeroGPU and losing the CPU-basic fallback the SPEC requires (D1).
+
+**A13 (2026-07-05) — Registry is two load-verified LoRAs (pixelart, render3d); watercolor and cartoon dropped.**
+The first live generation on the Space surfaced "Could not load LoRA 'watercolor'". Reproduced
+locally against the real `apply_loras` path: LoRAs from this era that include **text-encoder**
+layers (watercolor: 528 keys; cutecartoon) make diffusers 0.39's `load_lora_weights` raise
+`IndexError: list index out of range` during injection — not a fixable app bug. The two
+UNet-only Redmond LoRAs (pixelart, render3d: 384 keys) load, stack, disable, and re-enable
+cleanly (verified single + two-LoRA stack + toggle). Decision: ship those two rather than
+special-case a broken file or keep testing candidates — two LoRAs fully demonstrate application,
+stacking, and weight blending, which is the portfolio point (simplicity-first). More can be added
+later once load-verified. Also added a `logger.warning` of the real cause in `_load_adapter` so a
+future load failure is diagnosable from the Space logs instead of hidden behind the generic message.
