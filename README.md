@@ -1,8 +1,8 @@
 ---
 title: VoxelCraft
 emoji: 🎨
-colorFrom: gray
-colorTo: green
+colorFrom: blue
+colorTo: orange
 sdk: gradio
 sdk_version: 6.19.0
 app_file: app.py
@@ -11,6 +11,12 @@ license: mit
 ---
 
 # VoxelCraft
+
+<p align="center">
+  <a href="https://sheryyahmed457-voxelcraft.hf.space">
+    <img src="examples/voxelcraft-showcase.png" width="100%" alt="VoxelCraft showcase: a pixel-art lighthouse, a 3D-render robot barista, and a two-LoRA blend, each captioned with its LoRAs, weights, and seed.">
+  </a>
+</p>
 
 A Stable Diffusion 1.5 **LoRA application** pipeline with ControlNet pose control, built on
 Diffusers and served with Gradio on Hugging Face Spaces. Enter a prompt, stack up to two
