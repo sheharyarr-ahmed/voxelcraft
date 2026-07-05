@@ -104,8 +104,8 @@ venv/bin/black --check --line-length 100 src tests app.py
 ## Tech stack
 
 Python 3.12 · Diffusers · Transformers · PyTorch · PEFT · controlnet-aux · Pydantic v2 · Gradio ·
-Hugging Face Spaces (ZeroGPU). Single-author history is enforced mechanically by a `commit-msg`
-git hook.
+Hugging Face Spaces (free CPU-basic; `@spaces.GPU`-wired for ZeroGPU should PRO ever be added).
+Single-author history is enforced mechanically by a `commit-msg` git hook.
 
 ## License
 

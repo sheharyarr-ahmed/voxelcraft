@@ -253,6 +253,10 @@ def build_demo() -> gr.Blocks:
     """Construct the three-tab Blocks app (no models load here — only on generate)."""
     with gr.Blocks(title="VoxelCraft") as demo:
         gr.Markdown("# VoxelCraft\nStable Diffusion 1.5 + LoRA application with ControlNet.")
+        gr.Markdown(
+            "_Running on Hugging Face free CPU — the first generation also downloads the model, "
+            "so it takes a few minutes; the metadata panel reports the exact inference time._"
+        )
         with gr.Tab("Generate"):
             _build_generate_tab()
         with gr.Tab("Pose Control"):

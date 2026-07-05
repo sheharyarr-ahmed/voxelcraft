@@ -162,3 +162,13 @@ On ZeroGPU the pipeline builds fp16 on CPU in the parent, and the forked child m
 inside the call; `_infer` returns the real (device, dtype) so the metadata panel stays honest.
 `spaces` is intentionally not added to requirements.txt — the ZeroGPU image provides it, and
 keeping it out avoids any risk to the working CPU-basic build. To be verified live after the grant.
+
+**A15 (2026-07-05) — ZeroGPU now requires HF PRO; ship on free CPU-basic to hold the $0 budget.**
+Setting `zero-a10g` hardware via the API returned `402 Payment Required` — ZeroGPU is no longer a
+free host (it now requires an HF PRO subscription, ~$9/mo), contradicting the SPEC's D1 assumption
+that "ZeroGPU is the only zero-cost GPU host." The $0 budget is a hard constraint, so the app ships
+on **CPU-basic (free)**, which is verified working end to end (a live LoRA generation succeeded,
+metadata panel populated) at ~4–7 min per image — the SPEC's own documented CPU-basic fallback.
+No charge was incurred (the request was rejected, not billed). The A14 `@spaces.GPU` wiring stays
+in place and dormant, so a one-click hardware switch enables the fast path if PRO is ever added.
+Docs (README, DEPLOY) corrected to state ZeroGPU is PRO-only, not free.
