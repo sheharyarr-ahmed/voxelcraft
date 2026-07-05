@@ -69,6 +69,15 @@ def _lora_rows() -> tuple[Any, Any, Any, Any]:
         return gr.State(NONE), gr.State(1.0), gr.State(NONE), gr.State(1.0)
 
     choices = [NONE, *registry_keys]
+    triggers = " · ".join(
+        f"**{key}**: `{entry.trigger}`"
+        for key, entry in config.LORA_REGISTRY.items()
+        if entry.trigger
+    )
+    if triggers:
+        gr.Markdown(
+            f"Include a LoRA's trigger word in your prompt for the strongest effect — {triggers}"
+        )
     components: list[Any] = []
     for index in (1, 2):
         with gr.Row():
