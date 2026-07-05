@@ -9,11 +9,12 @@ Requirements live in `SPEC.md` at the repo root. Every locked decision lives in 
 **Shipped and live** on the free tier. Phases 0–4 are complete; the finalization tasks in "Next session — start here" below plus Phase 5 remain.
 
 - **Live app:** https://sheryyahmed457-voxelcraft.hf.space · **Space page:** https://huggingface.co/spaces/sheryyahmed457/voxelcraft · **GitHub:** https://github.com/sheharyarr-ahmed/voxelcraft (all pushed, single-author).
-- **Verified live:** Tab 1 (text→image + LoRA) generates on the Space with a populated metadata panel. Tab 2 (pose/ControlNet) is coded but **not yet live-verified** (next-session task).
+- **Verified live:** Tab 1 (text→image + LoRA) generates on the Space — **three real outputs captured and shipped** to `examples/` (`pixelart-lighthouse`, `render3d-robot-barista`, and a two-LoRA `blend-fox-astronaut`) with metadata sidecars, now shown in the README gallery. A branded cyan/peach LinkedIn contact sheet lives at `examples/voxelcraft-showcase.png`. Tab 2 (pose/ControlNet) is coded but **not yet live-verified** (next-session task 3).
 - **Hardware = free CPU-basic** (~4–7 min/image). **ZeroGPU is now PRO-only** ($9/mo; the API returns `402` — decision A15). The `@spaces.GPU` path is wired but dormant, gated on the `SPACES_ZERO_GPU` env var; a hardware switch enables it with no code change if PRO is ever added.
 - **LoRA registry = 2 entries** (`pixelart`, `render3d`), both HF-hosted and load-verified. Watercolor and CuteCartoon were dropped: LoRAs with **text-encoder layers** crash diffusers 0.39 `load_lora_weights` with `IndexError` (A13). Any new LoRA must be load-verified (UNet-only) before registering.
 - **HF auth:** already logged in as `sheryyahmed457` (write token at `~/.cache/huggingface/token`).
 - **Redeploy:** `venv/bin/python scripts/deploy_space.py` (uploads the working tree to the Space via `HfApi().upload_folder`, ignoring venv/models/caches). Build status: `HfApi().get_space_runtime('sheryyahmed457/voxelcraft').stage` (want `RUNNING`).
+- **Scripted example capture (reusable, used 2026-07-06):** to generate real outputs headlessly, temporarily flip the Tab 1 `generate_btn.click` to `api_visibility="public"` + `api_name="generate"`, redeploy, then drive the live Space from the terminal via `gradio_client` (`Client(REPO).submit(prompt, lora1, w1, lora2, w2, seed, api_name="/generate")` → returns image filepath + metadata). Save PNGs, then **revert to `private` and redeploy**. Never commit the exposed version (deploy uploads the working tree, not a git commit, so git history stays clean). ~11–14 min/image on CPU-basic.
 - **Local generation OOMs** on the 8 GB M1 at the VAE decode (D11/A11) — verify inference on the Space, never locally. Unit tests, mypy, and `import app; build_demo()` run fine locally.
 - **Open minor item:** the Stop-hook gate (`.claude/verify.sh` + `.claude/settings.json`) was never installed (permission classifier blocked agent-authored hooks); run `venv/bin/pytest -q` manually. Optional.
 
@@ -42,16 +43,17 @@ Requirements live in `SPEC.md` at the repo root. Every locked decision lives in 
 0. **Scaffold** ✅ (commit 72ae3e8).
 1. **Local inference smoke test** ✅ — pipeline + registry; local generation deferred to Spaces (D11/A11).
 2. **Gradio app** ✅ — three-tab Blocks; Tab 1 verified live on the Space.
-3. **ControlNet** ✅ — coded and unit-tested; **live pose verification pending** (next-session task 4).
+3. **ControlNet** ✅ — coded and unit-tested; **live pose verification pending** (next-session task 3).
 4. **Deploy + docs** ✅ — live Space, README/ARCHITECTURE/DEPLOY/notebook. Remaining polish → next-session tasks 1–3.
 5. **Portfolio conversion** — separate session, post-ship (demo recording, Upwork entry, LinkedIn).
 
 ## Next session — start here (finalization, all $0)
 
-1. **Brand icon + social preview.** Design the true-black/mint brand asset (Claude Design, or an HTML/SVG artifact rendered to PNG): a GitHub social-preview / Open Graph image (1280×640) and, optionally, refresh the Space thumbnail. The README HF frontmatter `emoji:` is currently `🎨` — change it if the brand calls for a different mark. This is the first visual a reviewer sees, so it leads the finalization.
+1. **Brand icon + social preview.** Design the **cyan + peach** brand asset — Sheharyar changed the direction from black/mint on 2026-07-06: bright cyan (~#22D3EE) + peach (~#FFB4A2) on a light/warm-off-white background. `examples/voxelcraft-showcase.png` already establishes this palette. Deliver an app icon + favicon (PNG) and a GitHub social-preview / Open Graph image (1280×640), optionally a Space thumbnail. The README HF frontmatter `emoji:` is currently `🎨` — change it if the brand calls for a different mark. First visual a reviewer sees, so it leads the finalization.
 2. **GitHub metadata.** Repo About description, topics (`stable-diffusion`, `lora`, `controlnet`, `diffusers`, `gradio`, `huggingface`, `generative-ai`, `python`), website/homepage → the live Space URL. Apply with `gh repo edit sheharyarr-ahmed/voxelcraft --description "..." --homepage "https://sheryyahmed457-voxelcraft.hf.space" --add-topic stable-diffusion --add-topic lora ...`; set the social-preview image (from task 1) in the GitHub web UI. **Confirm the About text with Sheharyar** before applying.
-3. **Example images.** Generate 3–4 outputs on the live Space (Tab 1, pixelart/render3d LoRAs), commit them to `examples/` (small file size), and reference them in the README so the repo shows output without the ~6-min wait. Generation is browser-driven (the API is private) — Sheharyar generates and hands over the files, or approve temporarily exposing the API to script it.
-4. **Pose-tab live test.** On the Space, upload a clear photo of a person → confirm skeleton preview → posed stylized output; confirm a no-person photo returns the friendly "no pose detected" error and a >5 MB upload is rejected. Closes the Phase 3 live gate.
+3. **Pose-tab live test.** On the Space, upload a clear photo of a person → confirm skeleton preview → posed stylized output; confirm a no-person photo returns the friendly "no pose detected" error and a >5 MB upload is rejected. Closes the Phase 3 live gate. (Capture the triptych for the README gallery while there — the scripted-API path can't upload a reference photo, so this shot is manual/browser.)
+
+**Done this session (2026-07-06):** example-image capture (task 3 of the prior list), README gallery + live-URL + license-table sync (commit `f52702b`, pushed to GitHub and redeployed to the Space, both verified live).
 
 ## Manual pause points (stop and ask Sheharyar — his answers, not yours)
 
