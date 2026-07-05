@@ -131,3 +131,12 @@ runs reached 10/10 denoise steps before the decode, and earlier runs surfaced lo
 as typed `PipelineLoadError`. Full image generation (Tab 1) and the ControlNet path (Tab 2) move to
 Hugging Face Spaces verification in Phase 4 (fp16 ZeroGPU, or CPU-basic where the 16 GB RAM envelope
 fits). The smoke script and `generate()` remain committed and unchanged.
+
+**A12 (2026-07-05) — ZeroGPU `@spaces.GPU` wiring deferred to the ZeroGPU-grant moment.**
+The first deploy targets CPU-basic, which runs the app as-is (16 GB RAM handles the fp32 decode that
+OOMs an 8 GB machine) and needs no `@spaces.GPU`. The ZeroGPU path (fork semantics, building fp16 on
+the parent, moving to CUDA inside the decorated child) cannot be verified locally or on CPU-basic, and
+adding it blind risks breaking the CPU-basic deploy. The pure-inference seam (`_infer` / `_infer_posed`)
+is already isolated, so the wiring is a localized addition made when ZeroGPU is granted and can be
+verified against real Spaces logs. Alternatives rejected: shipping untested ZeroGPU plumbing now
+(deploy-time surprises); building only for ZeroGPU and losing the CPU-basic fallback the SPEC requires (D1).
