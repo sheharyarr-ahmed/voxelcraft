@@ -38,13 +38,6 @@ class FakePipe:
         self.calls.append(("unload",))
 
 
-@pytest.fixture(autouse=True)
-def _clear_loaded() -> Any:
-    lora_manager._loaded_adapters.clear()
-    yield
-    lora_manager._loaded_adapters.clear()
-
-
 @pytest.fixture
 def register(monkeypatch: pytest.MonkeyPatch) -> Callable[..., None]:
     def add(key: str, base: str = config.SD15_BASE) -> None:
@@ -133,6 +126,7 @@ def test_failed_load_is_not_cached(register: Callable[..., None]) -> None:
         def load_lora_weights(self, *args: Any, **kwargs: Any) -> None:
             raise RuntimeError("boom")
 
+    pipe = BoomPipe()
     with pytest.raises(LoraLoadError):
-        lora_manager.apply_loras(BoomPipe(), {"anime": 1.0})
-    assert "anime" not in lora_manager._loaded_adapters
+        lora_manager.apply_loras(pipe, {"anime": 1.0})
+    assert "anime" not in lora_manager._loaded_for(pipe)

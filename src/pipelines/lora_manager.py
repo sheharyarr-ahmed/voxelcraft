@@ -24,8 +24,21 @@ from src.exceptions import LoraLoadError
 
 logger = logging.getLogger(__name__)
 
-# Adapter names diffusers has already loaded onto the pipeline this process.
-_loaded_adapters: set[str] = set()
+
+def _loaded_for(pipe: Any) -> set[str]:
+    """Return the set of adapter names loaded onto this specific pipe.
+
+    Stored on the pipe object rather than a module global so it is scoped to the pipe's
+    lifetime: a rebuilt pipeline starts with a fresh set instead of inheriting stale names
+    (which would make set_adapters raise on a name the new pipe never loaded), and tests
+    isolate naturally per fake instance. The registry is capped at a handful of entries
+    (SPEC D4), so the set stays small — no eviction needed.
+    """
+    loaded: set[str] | None = getattr(pipe, "_vc_loaded_adapters", None)
+    if loaded is None:
+        loaded = set()
+        pipe._vc_loaded_adapters = loaded
+    return loaded
 
 
 def apply_loras(pipe: Any, loras: dict[str, float]) -> tuple[list[str], list[float]]:
@@ -33,15 +46,16 @@ def apply_loras(pipe: Any, loras: dict[str, float]) -> tuple[list[str], list[flo
 
     Returns the applied adapter names and weights for the metadata panel.
     """
+    loaded = _loaded_for(pipe)
     if not loras:
-        if _loaded_adapters:
+        if loaded:
             pipe.disable_lora()
         return [], []
 
     _validate_selection(loras)
     for key in loras:
-        if key not in _loaded_adapters:
-            _load_adapter(pipe, key)
+        if key not in loaded:
+            _load_adapter(pipe, key, loaded)
 
     names = list(loras)
     weights = [loras[key] for key in names]
@@ -52,12 +66,17 @@ def apply_loras(pipe: Any, loras: dict[str, float]) -> tuple[list[str], list[flo
 
 def unload_all(pipe: Any) -> None:
     """Unload every adapter and clear the loaded-name set (manual memory-pressure valve)."""
-    if _loaded_adapters:
+    loaded = _loaded_for(pipe)
+    if loaded:
         pipe.unload_lora_weights()
-        _loaded_adapters.clear()
+        loaded.clear()
 
 
 def _validate_selection(loras: dict[str, float]) -> None:
+    # Deliberate second boundary. The count/registry/weight rules mirror the Pydantic schema
+    # (D6), but the lora-loading skill calls for defense in depth here too: apply_loras is a
+    # reusable function that must not trust its caller, and the SD-1.5-base check below has no
+    # schema equivalent. All failures raise LoraLoadError so callers see one consistent type.
     if len(loras) > config.MAX_LORAS:
         raise LoraLoadError(f"Select at most {config.MAX_LORAS} LoRAs.")
     for key, weight in loras.items():
@@ -73,7 +92,7 @@ def _validate_selection(loras: dict[str, float]) -> None:
             )
 
 
-def _load_adapter(pipe: Any, key: str) -> None:
+def _load_adapter(pipe: Any, key: str, loaded: set[str]) -> None:
     entry = config.LORA_REGISTRY[key]
     try:
         if entry.repo_id is not None:
@@ -87,7 +106,7 @@ def _load_adapter(pipe: Any, key: str) -> None:
         raise  # keep the specific message from _ensure_local_weights
     except Exception as exc:  # diffusers raises a variety of load-time errors; normalize them
         raise LoraLoadError(f"Could not load LoRA {key!r}.") from exc
-    _loaded_adapters.add(key)
+    loaded.add(key)
 
 
 def _ensure_local_weights(key: str, entry: config.LoraEntry) -> Path:

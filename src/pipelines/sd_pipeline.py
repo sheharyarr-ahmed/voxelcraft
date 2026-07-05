@@ -97,6 +97,19 @@ def free_memory() -> None:
         torch.mps.empty_cache()
 
 
+def _is_oom(exc: BaseException) -> bool:
+    """Whether an exception is an out-of-memory error on CUDA, MPS, or CPU.
+
+    Only CUDA raises the dedicated ``torch.cuda.OutOfMemoryError``; MPS and CPU (this repo's
+    primary dev and fallback targets) surface OOM as a plain ``RuntimeError`` whose message
+    carries "out of memory" / "not enough memory".
+    """
+    if isinstance(exc, torch.cuda.OutOfMemoryError):
+        return True
+    message = str(exc).lower()
+    return "out of memory" in message or "not enough memory" in message
+
+
 def generate(request: GenerationRequest) -> tuple[Any, dict[str, Any]]:
     """Run a validated text-to-image request; return (PIL image, metadata dict)."""
     with _gpu_lock:
@@ -109,11 +122,13 @@ def generate(request: GenerationRequest) -> tuple[Any, dict[str, Any]]:
         start = time.perf_counter()
         try:
             image = _infer(pipe, request, generator)
-        except torch.cuda.OutOfMemoryError as exc:
+            elapsed = time.perf_counter() - start  # time the denoise only, not cleanup
+        except RuntimeError as exc:
+            if not _is_oom(exc):
+                raise
             raise GenerationError("Out of memory — try fewer LoRAs or retry in a moment.") from exc
         finally:
             free_memory()
-        elapsed = time.perf_counter() - start
         metadata = capture_metadata(
             adapter_names=adapter_names,
             adapter_weights=adapter_weights,

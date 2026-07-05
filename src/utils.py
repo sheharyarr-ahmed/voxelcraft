@@ -89,8 +89,10 @@ def capture_metadata(
 ) -> dict[str, Any]:
     """Assemble the metadata-panel dict shown in the UI after a generation.
 
-    ``adapter_names`` / ``adapter_weights`` are read back from the live pipeline, not
-    echoed from the request, so the panel reports what was actually applied.
+    ``adapter_names`` / ``adapter_weights`` are the applied selection returned by
+    ``lora_manager.apply_loras``, which guarantees the pipeline's active adapter set matches
+    them (calling ``enable_lora()`` then ``set_adapters()``, or raising) — so the panel
+    reflects what was actually applied, not merely what was requested.
     """
     metadata: dict[str, Any] = {
         "loras_applied": adapter_names,
