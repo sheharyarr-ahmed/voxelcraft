@@ -17,7 +17,7 @@ Diffusers and served with Gradio on Hugging Face Spaces. Enter a prompt, stack u
 pre-trained LoRAs with per-adapter weight control, or drive generation from a reference pose —
 every result comes with a metadata panel showing exactly what was applied.
 
-**Live demo:** _set after deploy_ · **Source:** https://github.com/sheharyarr-ahmed/voxelcraft
+**Live demo:** https://sheryyahmed457-voxelcraft.hf.space · **Source:** https://github.com/sheharyarr-ahmed/voxelcraft
 
 ## What this is / What this is not
 
@@ -48,13 +48,31 @@ This section is deliberate and load-bearing. It states exactly where hands-on wo
 
 1. **Text to image with LoRA stacking.** Prompt in, select 1–2 license-verified LoRAs from the
    registry, adjust weight sliders, generate a 512×512 image. A metadata panel reports the LoRAs
-   applied, weights, seed, scheduler, steps, and inference time. (The curated LoRAs are pending
-   manual license verification; until then the tab runs on base SD 1.5 with an empty-state notice.)
+   applied, weights, seed, scheduler, steps, and inference time. Two license-verified LoRAs ship
+   today — `pixelart` and `render3d` — stackable and individually weighted.
 2. **Pose-controlled generation.** Upload a reference photo; OpenPose extracts the skeleton
    (shown as intermediate output); ControlNet + SD 1.5 (+ an optional LoRA style) generate a new
    image matching the pose.
 3. **Training methodology reference.** A static tab rendering the LoRA training walkthrough, with
    the banner: _"Methodology reference. This app applies pre-trained LoRAs."_
+
+## Examples
+
+Real outputs generated through the app on the live Space (free CPU-basic, SD 1.5, DPM++ 2M,
+20 steps). Each image's seed, LoRAs, and inference time came from the app's own metadata panel.
+
+<table>
+<tr>
+<td width="33%"><img src="examples/pixelart-lighthouse.png" width="100%" alt="Pixel-art lighthouse at sunset"></td>
+<td width="33%"><img src="examples/render3d-robot-barista.png" width="100%" alt="3D-render robot barista in a cafe"></td>
+<td width="33%"><img src="examples/blend-fox-astronaut.png" width="100%" alt="Two-LoRA blended pixel/3D scene"></td>
+</tr>
+<tr>
+<td><b><code>pixelart</code></b> @ 1.0 · seed 42<br><sub>"a cozy lighthouse on a cliff at sunset"</sub></td>
+<td><b><code>render3d</code></b> @ 1.0 · seed 7<br><sub>"a friendly robot barista in a small cafe"</sub></td>
+<td><b><code>pixelart</code></b> @ 0.8 + <b><code>render3d</code></b> @ 0.6 · seed 123<br><sub>two-LoRA blend via <code>set_adapters</code></sub></td>
+</tr>
+</table>
 
 ## Architecture
 
@@ -67,16 +85,20 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full diagram and the 
 
 Every model artifact loaded at runtime is documented. Base and conditioning models:
 
-| Artifact | Model ID | License |
-| --- | --- | --- |
-| SD 1.5 base weights | `stable-diffusion-v1-5/stable-diffusion-v1-5` | CreativeML Open RAIL-M (use-based restrictions apply) |
-| ControlNet OpenPose | `lllyasviel/control_v11p_sd15_openpose` | Open RAIL |
-| OpenPose annotator | `lllyasviel/Annotators` | Unspecified — verify per the ambiguity rule before use |
+| Artifact | Model ID | Author | License |
+| --- | --- | --- | --- |
+| SD 1.5 base weights | `stable-diffusion-v1-5/stable-diffusion-v1-5` | Stability AI / RunwayML | CreativeML Open RAIL-M (use-based restrictions apply) |
+| ControlNet OpenPose | `lllyasviel/control_v11p_sd15_openpose` | lllyasviel | Open RAIL |
+| OpenPose annotator | `lllyasviel/Annotators` | lllyasviel | Unspecified — verify per the ambiguity rule before use |
+| LoRA — `pixelart` | `artificialguybr/pixelartredmond-1-5v-pixel-art-loras-for-sd-1-5` | artificialguybr | bespoke-lora-trained-license — commercial image use permitted (verified 2026-07-05) |
+| LoRA — `render3d` | `artificialguybr/3d-redmond-1-5v-3d-render-style-for-liberte-redmond-sd-1-5` | artificialguybr | bespoke-lora-trained-license — commercial image use permitted (verified 2026-07-05) |
 
-LoRA adapters are pre-trained, third-party models. Each entry is added to the registry
-(`src/config.py`) only after its commercial-use license is verified by hand; the registry records
-the model-card URL, author, exact license/permission wording, and date checked. The three curated
-LoRAs (anime / realistic / painterly) are pending that final license verification step.
+LoRA adapters are pre-trained, third-party models. Each is added to the registry
+(`src/config.py`) only after its commercial-use license is verified by hand — the registry records
+the model-card URL, author, exact license/permission wording, and date checked. Both registered
+LoRAs are authored by artificialguybr under a bespoke-lora-trained-license whose terms permit
+selling generated images and running paid generation services, while disallowing resale of the
+model itself (which this app does not do).
 
 ## Run locally
 

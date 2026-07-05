@@ -1,0 +1,17 @@
+{
+  "loras_applied": [
+    "render3d"
+  ],
+  "lora_weights": [
+    1.0
+  ],
+  "seed": 7,
+  "scheduler": "DPMSolverMultistepScheduler",
+  "steps": 20,
+  "guidance_scale": 7.5,
+  "inference_seconds": 785.72,
+  "device": "cpu",
+  "dtype": "torch.float32",
+  "truncated_tokens": 0,
+  "safety_checker": "enabled"
+}
