@@ -2,7 +2,7 @@
 title: VoxelCraft
 emoji: 🎨
 colorFrom: blue
-colorTo: orange
+colorTo: pink
 sdk: gradio
 sdk_version: 6.19.0
 app_file: app.py
