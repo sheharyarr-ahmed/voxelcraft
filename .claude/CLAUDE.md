@@ -6,7 +6,7 @@ Requirements live in `SPEC.md` at the repo root. Every locked decision lives in 
 
 ## Current status & handoff (updated 2026-07-06)
 
-**Shipped and live** on the free tier. Phases 0–4 are complete; the three tasks in "Next session — start here" below plus Phase 5 remain.
+**Shipped and live** on the free tier. Phases 0–4 are complete; the finalization tasks in "Next session — start here" below plus Phase 5 remain.
 
 - **Live app:** https://sheryyahmed457-voxelcraft.hf.space · **Space page:** https://huggingface.co/spaces/sheryyahmed457/voxelcraft · **GitHub:** https://github.com/sheharyarr-ahmed/voxelcraft (all pushed, single-author).
 - **Verified live:** Tab 1 (text→image + LoRA) generates on the Space with a populated metadata panel. Tab 2 (pose/ControlNet) is coded but **not yet live-verified** (next-session task).
@@ -42,20 +42,21 @@ Requirements live in `SPEC.md` at the repo root. Every locked decision lives in 
 0. **Scaffold** ✅ (commit 72ae3e8).
 1. **Local inference smoke test** ✅ — pipeline + registry; local generation deferred to Spaces (D11/A11).
 2. **Gradio app** ✅ — three-tab Blocks; Tab 1 verified live on the Space.
-3. **ControlNet** ✅ — coded and unit-tested; **live pose verification pending** (next-session task 3).
-4. **Deploy + docs** ✅ — live Space, README/ARCHITECTURE/DEPLOY/notebook. Remaining polish → next-session tasks 1–2.
+3. **ControlNet** ✅ — coded and unit-tested; **live pose verification pending** (next-session task 4).
+4. **Deploy + docs** ✅ — live Space, README/ARCHITECTURE/DEPLOY/notebook. Remaining polish → next-session tasks 1–3.
 5. **Portfolio conversion** — separate session, post-ship (demo recording, Upwork entry, LinkedIn).
 
-## Next session — start here (three tasks, all $0)
+## Next session — start here (finalization, all $0)
 
-1. **GitHub metadata polish.** Set the repo About description and topics (`stable-diffusion`, `lora`, `controlnet`, `diffusers`, `gradio`, `huggingface`, `generative-ai`, `python`), the website/homepage field → the live Space URL, and a social-preview image (true-black/mint brand). `gh repo edit sheharyarr-ahmed/voxelcraft --description ... --homepage ... --add-topic ...` sets the first three; the social preview is set in the GitHub web UI. **Confirm the About text with Sheharyar** before applying.
-2. **Example images.** Generate 3–4 outputs on the live Space (Tab 1, pixelart/render3d LoRAs), commit them to `examples/` (small file size), and reference them in the README so the repo shows output without the ~6-min wait. Generation is browser-driven (the API is private) — Sheharyar generates and hands over the files, or approve temporarily exposing the API to script it.
-3. **Pose-tab live test.** On the Space, upload a clear photo of a person → confirm skeleton preview → posed stylized output; confirm a no-person photo returns the friendly "no pose detected" error and a >5 MB upload is rejected. Closes the Phase 3 live gate.
+1. **Brand icon + social preview.** Design the true-black/mint brand asset (Claude Design, or an HTML/SVG artifact rendered to PNG): a GitHub social-preview / Open Graph image (1280×640) and, optionally, refresh the Space thumbnail. The README HF frontmatter `emoji:` is currently `🎨` — change it if the brand calls for a different mark. This is the first visual a reviewer sees, so it leads the finalization.
+2. **GitHub metadata.** Repo About description, topics (`stable-diffusion`, `lora`, `controlnet`, `diffusers`, `gradio`, `huggingface`, `generative-ai`, `python`), website/homepage → the live Space URL. Apply with `gh repo edit sheharyarr-ahmed/voxelcraft --description "..." --homepage "https://sheryyahmed457-voxelcraft.hf.space" --add-topic stable-diffusion --add-topic lora ...`; set the social-preview image (from task 1) in the GitHub web UI. **Confirm the About text with Sheharyar** before applying.
+3. **Example images.** Generate 3–4 outputs on the live Space (Tab 1, pixelart/render3d LoRAs), commit them to `examples/` (small file size), and reference them in the README so the repo shows output without the ~6-min wait. Generation is browser-driven (the API is private) — Sheharyar generates and hands over the files, or approve temporarily exposing the API to script it.
+4. **Pose-tab live test.** On the Space, upload a clear photo of a person → confirm skeleton preview → posed stylized output; confirm a no-person photo returns the friendly "no pose detected" error and a >5 MB upload is rejected. Closes the Phase 3 live gate.
 
 ## Manual pause points (stop and ask Sheharyar — his answers, not yours)
 
 - LoRA license verification — done for the current 2 (A13); any new LoRA needs his sign-off and must be load-verified.
-- **GitHub metadata polish** (next-session task 1) — confirm the About text with him.
+- **Brand icon + GitHub metadata** (next-session tasks 1–2) — confirm the brand asset and the About text with him before applying.
 
 ## Commands
 
