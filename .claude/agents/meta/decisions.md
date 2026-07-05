@@ -117,3 +117,17 @@ between failing and meeting the SPEC's <5-min CPU-basic target, and it also shri
 run and ZeroGPU quota per generation. Set identically on every device (a device-conditional step
 count would falsify the committed example images' metadata). The scheduler name is read back from
 `type(pipe.scheduler).__name__` into the metadata panel, never hardcoded.
+
+**A11 (2026-07-05) — Local inference OOMs on the 8 GB M1; D11 fallback invoked.**
+Two D11 smoke runs (CPU fp32, cached weights) each completed all 10 denoise steps and then crashed
+with SIGBUS during the VAE decode: the fp32 decode of a 512×512 image is a large activation spike on
+top of the ~5.5 GB resident model, and the machine was already swap-bound (11 GB of 12 GB swap in use,
+~16 MB RAM free). `enable_vae_tiling()`/`enable_vae_slicing()` were tried and reverted — tiling does
+not engage at 512×512 (below its size threshold), so it is a no-op here and keeping it would be
+speculative (simplicity-first). Per decision D11 ("if local generation OOMs, smoke-test directly on
+Spaces hardware and log that decision; all real inference happens on Spaces"), local end-to-end
+generation is not achievable on this hardware. Local evidence the pipeline is wired correctly: both
+runs reached 10/10 denoise steps before the decode, and earlier runs surfaced load failures cleanly
+as typed `PipelineLoadError`. Full image generation (Tab 1) and the ControlNet path (Tab 2) move to
+Hugging Face Spaces verification in Phase 4 (fp16 ZeroGPU, or CPU-basic where the 16 GB RAM envelope
+fits). The smoke script and `generate()` remain committed and unchanged.
