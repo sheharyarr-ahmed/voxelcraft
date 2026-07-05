@@ -68,6 +68,46 @@ class LoraEntry:
     sha256: str | None = None
 
 
-# Empty until D4 verification completes. Each populated entry gets a comment quoting the
-# exact permission wording and the date it was checked (rules/license-compliance.md).
-LORA_REGISTRY: dict[str, LoraEntry] = {}
+# Each entry's commercial-use license was verified by hand against the Hugging Face model
+# card on the date noted (rules/license-compliance.md, D4). All are HF-hosted and public, so
+# they load via load_lora_weights(repo_id, weight_name=...) with no auth token.
+LORA_REGISTRY: dict[str, LoraEntry] = {
+    # Verified 2026-07-05 — HF card + API (gated: false). License creativeml-openrail-m, the
+    # same license SD 1.5 ships under; its Attachment A use-restrictions do not restrict
+    # commercial use of generated images. Pin the -sd-1-5 file (the repo also has an SD-2.1 one).
+    "watercolor": LoraEntry(
+        url="https://huggingface.co/fladdict/watercolor",
+        author="fladdict",
+        license="CreativeML Open RAIL-M",
+        commercial_use=True,
+        base_model=SD15_BASE,
+        trigger="watercolor painting",
+        repo_id="fladdict/watercolor",
+        weight_name="fladdict-watercolor-sd-1-5.safetensors",
+    ),
+    # Verified 2026-07-05 — HF card. bespoke-lora-trained-license; its license_link permits
+    # "Sell images they generate" and "Run on services that generate images for money"; only
+    # "Sell this model or merges" is disallowed, which this app does not do.
+    "pixelart": LoraEntry(
+        url="https://huggingface.co/artificialguybr/pixelartredmond-1-5v-pixel-art-loras-for-sd-1-5",
+        author="artificialguybr",
+        license="bespoke-lora-trained-license (commercial image use permitted)",
+        commercial_use=True,
+        base_model=SD15_BASE,
+        trigger="Pixel Art, PixArFK",
+        repo_id="artificialguybr/pixelartredmond-1-5v-pixel-art-loras-for-sd-1-5",
+        weight_name="PixelArtRedmond15V-PixelArt-PIXARFK.safetensors",
+    ),
+    # Verified 2026-07-05 — HF card. Same bespoke-lora-trained-license as pixelart: commercial
+    # use of generated images permitted, selling the model disallowed (not needed here).
+    "render3d": LoraEntry(
+        url="https://huggingface.co/artificialguybr/3d-redmond-1-5v-3d-render-style-for-liberte-redmond-sd-1-5",
+        author="artificialguybr",
+        license="bespoke-lora-trained-license (commercial image use permitted)",
+        commercial_use=True,
+        base_model=SD15_BASE,
+        trigger="3D Render Style, 3DRenderAF",
+        repo_id="artificialguybr/3d-redmond-1-5v-3d-render-style-for-liberte-redmond-sd-1-5",
+        weight_name="3DRedmond15V-LiberteRedmond-3DRenderStyle-3DRenderAF.safetensors",
+    ),
+}
