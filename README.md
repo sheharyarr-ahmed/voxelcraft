@@ -1,15 +1,3 @@
----
-title: VoxelCraft
-emoji: 🎨
-colorFrom: blue
-colorTo: pink
-sdk: gradio
-sdk_version: 6.19.0
-app_file: app.py
-pinned: false
-license: mit
----
-
 <p align="center">
   <img src="assets/voxelcraft-icon.png" width="160" alt="VoxelCraft logo">
 </p>
