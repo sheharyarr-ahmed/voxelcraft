@@ -1,0 +1,6 @@
+# Deploy only the self-contained showcase page — not the project's Markdown docs,
+# local Vercel link state, or env/token files.
+*.md
+.vercel
+.env
+.env.*
