@@ -10,7 +10,21 @@ pinned: false
 license: mit
 ---
 
-# VoxelCraft
+<p align="center">
+  <img src="assets/voxelcraft-icon.png" width="160" alt="VoxelCraft logo">
+</p>
+
+<h1 align="center">VoxelCraft</h1>
+
+<p align="center">
+  <em>Stable Diffusion 1.5 LoRA application pipeline · ControlNet pose control</em>
+</p>
+
+<p align="center">
+  <a href="https://sheryyahmed457-voxelcraft.hf.space"><b>Live demo</b></a> ·
+  <a href="https://voxelcraft-showcase.vercel.app"><b>Showcase</b></a> ·
+  <a href="https://github.com/sheharyarr-ahmed/voxelcraft"><b>Source</b></a>
+</p>
 
 <p align="center">
   <a href="https://sheryyahmed457-voxelcraft.hf.space">
